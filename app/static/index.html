@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Manual Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔒 Security Manual Assistant</h1>
+                <p class="subtitle">AI-powered assistant for Teletek & Duevi manuals</p>
+            </div>
+            <div class="header-actions">
+                <select id="brandFilter" class="brand-select">
+                    <option value="">All Brands</option>
+                    <option value="teletek">Teletek</option>
+                    <option value="duevi">Duevi</option>
+                </select>
+                <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div id="chatMessages" class="chat-messages">
+                <!-- Welcome message -->
+                <div class="message assistant-message">
+                    <div class="message-content">
+                        <p>Hello! I'm your Security Manual Assistant. I can help you find information from Teletek and Duevi technical manuals.</p>
+                        <p>Ask me about:</p>
+                        <ul>
+                            <li>Installation procedures</li>
+                            <li>Wiring diagrams</li>
+                            <li>Troubleshooting steps</li>
+                            <li>Configuration settings</li>
+                            <li>Technical specifications</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-container">
+            <form id="queryForm" class="input-form">
+                <input 
+                    type="text" 
+                    id="queryInput" 
+                    placeholder="Ask a question about security systems..."
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" id="sendBtn">
+                    <span class="send-icon">➤</span>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings & Admin</h2>
+                <button class="close-btn" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- System Status -->
+                <section class="settings-section">
+                    <h3>System Status</h3>
+                    <div id="systemStatus" class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">API Status:</span>
+                            <span id="apiStatus" class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Vector DB:</span>
+                            <span id="qdrantStatus" class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">OpenAI:</span>
+                            <span id="openaiStatus" class="status-value loading">Checking...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Upload Manual -->
+                <section class="settings-section">
+                    <h3>Upload Manual</h3>
+                    <form id="uploadForm" class="upload-form">
+                        <select id="uploadBrand" required>
+                            <option value="">Select Brand</option>
+                            <option value="teletek">Teletek</option>
+                            <option value="duevi">Duevi</option>
+                        </select>
+                        <input type="file" id="uploadFile" accept=".pdf" required>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </section>
+
+                <!-- Index Manuals -->
+                <section class="settings-section">
+                    <h3>Index Manuals</h3>
+                    <p class="help-text">Process and index uploaded manuals for search.</p>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="ingestBrand('teletek')">
+                            Index Teletek
+                        </button>
+                        <button class="btn btn-secondary" onclick="ingestBrand('duevi')">
+                            Index Duevi
+                        </button>
+                    </div>
+                    <div id="ingestStatus" class="ingest-status"></div>
+                </section>
+
+                <!-- Statistics -->
+                <section class="settings-section">
+                    <h3>Statistics</h3>
+                    <div id="statsContainer" class="stats-container">
+                        <button class="btn btn-outline" onclick="loadStats()">Load Stats</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
