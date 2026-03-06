@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Knowledge Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🌐 Universal Knowledge Assistant</h1>
+                <p class="subtitle">Multi-Source RAG System - PDF, Web, YouTube, Database</p>
+            </div>
+            <div class="header-actions">
+                <select id="brandFilter" class="brand-select">
+                    <option value="">All Sources</option>
+                    <option value="teletek">Teletek</option>
+                    <option value="duevi">Duevi</option>
+                    <option value="website">Websites</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="database">Database</option>
+                </select>
+                <button id="newChatBtn" class="icon-btn" title="New Conversation">➕</button>
+                <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div id="chatMessages" class="chat-messages">
+                <!-- Welcome message -->
+                <div class="message assistant-message">
+                    <div class="message-content">
+                        <p>👋 Hello! I'm your Universal Knowledge Assistant with conversation memory.</p>
+                        <p>I can answer questions from multiple sources:</p>
+                        <ul>
+                            <li>📄 <strong>PDF Documents</strong> - Technical manuals and documents</li>
+                            <li>🌐 <strong>Websites</strong> - Web content and articles</li>
+                            <li>🎥 <strong>YouTube Videos</strong> - Video transcripts</li>
+                            <li>🗄️ <strong>Databases</strong> - SQL and MongoDB data</li>
+                        </ul>
+                        <p>Your conversation is remembered, so you can ask follow-up questions naturally!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-container">
+            <form id="queryForm" class="input-form">
+                <input 
+                    type="text" 
+                    id="queryInput" 
+                    placeholder="Ask anything from your knowledge base..."
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" id="sendBtn">
+                    <span class="send-icon">➤</span>
+                </button>
+            </form>
+            <div class="session-info">
+                Session: <span id="sessionId">New Session</span> 
+                <button id="clearSession" class="small-btn" title="Clear conversation">🗑️</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings & Data Management</h2>
+                <button class="close-btn" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- System Status -->
+                <section class="settings-section">
+                    <h3>System Status</h3>
+                    <div id="systemStatus" class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">API Status:</span>
+                            <span id="apiStatus" class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Vector DB:</span>
+                            <span id="qdrantStatus" class="status-value loading">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">OpenAI:</span>
+                            <span id="openaiStatus" class="status-value loading">Checking...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab Navigation -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="pdf">📄 PDF</button>
+                    <button class="tab-btn" data-tab="website">🌐 Website</button>
+                    <button class="tab-btn" data-tab="youtube">🎥 YouTube</button>
+                    <button class="tab-btn" data-tab="database">🗄️ Database</button>
+                </div>
+
+                <!-- PDF Tab -->
+                <div class="tab-content active" id="pdf-tab">
+                    <section class="settings-section">
+                        <h3>Upload PDF Manual</h3>
+                        <form id="uploadForm" class="upload-form">
+                            <select id="uploadBrand" required>
+                                <option value="">Select Category</option>
+                                <option value="teletek">Teletek</option>
+                                <option value="duevi">Duevi</option>
+                                <option value="manual">General Manual</option>
+                            </select>
+                            <input type="file" id="uploadFile" accept=".pdf" required>
+                            <button type="submit" class="btn btn-primary">Upload & Index</button>
+                        </form>
+                        <div id="uploadStatus" class="status-message"></div>
+                    </section>
+
+                    <section class="settings-section">
+                        <h3>Index Existing PDFs</h3>
+                        <div class="button-group">
+                            <button class="btn btn-secondary" onclick="ingestBrand('teletek')">Index Teletek</button>
+                            <button class="btn btn-secondary" onclick="ingestBrand('duevi')">Index Duevi</button>
+                        </div>
+                        <div id="ingestStatus" class="status-message"></div>
+                    </section>
+                </div>
+
+                <!-- Website Tab -->
+                <div class="tab-content" id="website-tab">
+                    <section class="settings-section">
+                        <h3>Ingest Website Content</h3>
+                        <form id="websiteForm" class="ingest-form">
+                            <label>Website URLs (one per line):</label>
+                            <textarea id="websiteUrls" rows="5" placeholder="https://example.com/page1&#10;https://example.com/page2" required></textarea>
+                            <input type="text" id="websiteName" placeholder="Source Name (optional)">
+                            <button type="submit" class="btn btn-primary">Ingest Websites</button>
+                        </form>
+                        <div id="websiteStatus" class="status-message"></div>
+                    </section>
+                </div>
+
+                <!-- YouTube Tab -->
+                <div class="tab-content" id="youtube-tab">
+                    <section class="settings-section">
+                        <h3>Ingest YouTube Videos</h3>
+                        <form id="youtubeForm" class="ingest-form">
+                            <label>YouTube URLs (one per line):</label>
+                            <textarea id="youtubeUrls" rows="5" placeholder="https://youtube.com/watch?v=...&#10;https://youtu.be/..." required></textarea>
+                            <label>Languages (comma-separated):</label>
+                            <input type="text" id="youtubeLangs" value="en,bn" placeholder="en,bn">
+                            <button type="submit" class="btn btn-primary">Ingest Videos</button>
+                        </form>
+                        <div id="youtubeStatus" class="status-message"></div>
+                    </section>
+                </div>
+
+                <!-- Database Tab -->
+                <div class="tab-content" id="database-tab">
+                    <section class="settings-section">
+                        <h3>Ingest from SQL Database</h3>
+                        <form id="sqlForm" class="ingest-form">
+                            <input type="text" id="sqlConnection" placeholder="Connection String (e.g., postgresql://user:pass@host/db)" required>
+                            <input type="text" id="sqlTable" placeholder="Table Name (optional)">
+                            <textarea id="sqlQuery" rows="3" placeholder="Custom SQL Query (optional)"></textarea>
+                            <input type="text" id="sqlName" placeholder="Source Name (optional)">
+                            <button type="submit" class="btn btn-primary">Ingest SQL Data</button>
+                        </form>
+                        <div id="sqlStatus" class="status-message"></div>
+                    </section>
+
+                    <section class="settings-section">
+                        <h3>Ingest from MongoDB</h3>
+                        <form id="mongoForm" class="ingest-form">
+                            <input type="text" id="mongoConnection" placeholder="Connection String (e.g., mongodb://localhost:27017)" required>
+                            <input type="text" id="mongoDatabase" placeholder="Database Name" required>
+                            <input type="text" id="mongoCollection" placeholder="Collection Name" required>
+                            <textarea id="mongoQuery" rows="2" placeholder="Query Filter (JSON, optional)"></textarea>
+                            <button type="submit" class="btn btn-primary">Ingest MongoDB Data</button>
+                        </form>
+                        <div id="mongoStatus" class="status-message"></div>
+                    </section>
+                </div>
+
+                <!-- Statistics -->
+                <section class="settings-section">
+                    <h3>Statistics</h3>
+                    <div id="statsContainer" class="stats-container">
+                        <button class="btn btn-outline" onclick="loadStats()">Load Stats</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

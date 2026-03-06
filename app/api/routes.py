@@ -1,17 +1,25 @@
 """API routes for the RAG application."""
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pathlib import Path
 import time
 import shutil
 from typing import Optional
+import asyncio
 
 from app.models.schemas import (
     QueryRequest, QueryResponse, 
     IngestRequest, IngestResponse,
-    HealthResponse
+    HealthResponse, ConversationQueryRequest, ConversationQueryResponse,
+    WebsiteIngestRequest, YouTubeIngestRequest,
+    DatabaseIngestRequest, MongoDBIngestRequest,
+    MultiSourceIngestResponse
 )
-from app.services import PDFProcessor, VectorStore, RAGService, LoggingService
+from app.services import (
+    PDFProcessor, VectorStore, RAGService, LoggingService,
+    WebsiteProcessor, YouTubeProcessor, DatabaseProcessor,
+    get_conversation_memory
+)
 from app.config import get_settings
 
 router = APIRouter()
@@ -22,6 +30,10 @@ pdf_processor = PDFProcessor()
 vector_store = VectorStore()
 rag_service = RAGService()
 logging_service = LoggingService()
+website_processor = WebsiteProcessor()
+youtube_processor = YouTubeProcessor()
+database_processor = DatabaseProcessor()
+conversation_memory = get_conversation_memory()
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -223,4 +235,310 @@ async def initialize_database():
         raise HTTPException(
             status_code=500,
             detail=f"Initialization failed: {str(e)}"
+        )
+
+
+# ==================== NEW ADVANCED ENDPOINTS ====================
+
+# Streaming endpoints
+@router.post("/query/stream")
+async def query_stream(request: QueryRequest, brand: Optional[str] = None):
+    """
+    Query the RAG system with streaming response.
+    
+    Args:
+        request: QueryRequest containing the question
+        brand: Optional brand filter
+        
+    Returns:
+        Streaming response with answer chunks and citations
+    """
+    try:
+        return StreamingResponse(
+            rag_service.query_stream(
+                query=request.query,
+                brand_filter=brand
+            ),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Stream query failed: {str(e)}")
+
+
+# Conversation endpoints
+@router.post("/conversation/query", response_model=ConversationQueryResponse)
+async def conversation_query(request: ConversationQueryRequest):
+    """
+    Query with conversation memory (non-streaming).
+    
+    Args:
+        request: ConversationQueryRequest with query and optional session_id
+        
+    Returns:
+        ConversationQueryResponse with answer, citations, and session_id
+    """
+    try:
+        response = rag_service.query_with_conversation(
+            query=request.query,
+            session_id=request.session_id,
+            brand_filter=request.brand_filter
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversation query failed: {str(e)}")
+
+
+@router.post("/conversation/query/stream")
+async def conversation_query_stream(request: ConversationQueryRequest):
+    """
+    Query with conversation memory and streaming response.
+    
+    Args:
+        request: ConversationQueryRequest with query and optional session_id
+        
+    Returns:
+        Streaming response with session_id, answer chunks, and citations
+    """
+    try:
+        return StreamingResponse(
+            rag_service.query_with_conversation_stream(
+                query=request.query,
+                session_id=request.session_id,
+                brand_filter=request.brand_filter
+            ),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversation stream failed: {str(e)}")
+
+
+@router.get("/conversation/history/{session_id}")
+async def get_conversation_history(session_id: str):
+    """Get conversation history for a session."""
+    history = conversation_memory.get_conversation_history(session_id)
+    if not history and session_id not in conversation_memory.list_active_sessions():
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {
+        "session_id": session_id,
+        "messages": [msg.model_dump() for msg in history]
+    }
+
+
+@router.delete("/conversation/{session_id}")
+async def clear_conversation(session_id: str):
+    """Clear a conversation session."""
+    success = conversation_memory.clear_session(session_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {"status": "success", "message": f"Cleared session: {session_id}"}
+
+
+@router.get("/conversation/sessions")
+async def list_sessions():
+    """List all active conversation sessions."""
+    sessions = conversation_memory.list_active_sessions()
+    summaries = [conversation_memory.get_session_summary(sid) for sid in sessions]
+    return {"sessions": summaries}
+
+
+# Multi-source ingestion endpoints
+@router.post("/ingest/website", response_model=MultiSourceIngestResponse)
+async def ingest_website(request: WebsiteIngestRequest):
+    """
+    Ingest content from websites.
+    
+    Args:
+        request: WebsiteIngestRequest with URLs and optional source name
+        
+    Returns:
+        MultiSourceIngestResponse with status
+    """
+    try:
+        # Ensure collection exists
+        vector_store.create_collection()
+        
+        # Process websites
+        chunks = website_processor.process_urls(
+            urls=request.urls,
+            source_name=request.source_name
+        )
+        
+        if not chunks:
+            raise HTTPException(
+                status_code=400,
+                detail="No content could be extracted from the provided URLs"
+            )
+        
+        # Add to vector store
+        chunks_created = vector_store.add_chunks(chunks)
+        
+        return MultiSourceIngestResponse(
+            status="success",
+            source_type="website",
+            chunks_created=chunks_created,
+            message=f"Successfully indexed {len(request.urls)} website(s) with {chunks_created} chunks"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Website ingestion failed: {str(e)}"
+        )
+
+
+@router.post("/ingest/youtube", response_model=MultiSourceIngestResponse)
+async def ingest_youtube(request: YouTubeIngestRequest):
+    """
+    Ingest transcripts from YouTube videos.
+    
+    Args:
+        request: YouTubeIngestRequest with video URLs and language preferences
+        
+    Returns:
+        MultiSourceIngestResponse with status
+    """
+    try:
+        # Ensure collection exists
+        vector_store.create_collection()
+        
+        # Process YouTube videos
+        chunks = youtube_processor.process_videos(
+            video_urls=request.video_urls,
+            languages=request.languages
+        )
+        
+        if not chunks:
+            raise HTTPException(
+                status_code=400,
+                detail="No transcripts could be extracted from the provided videos"
+            )
+        
+        # Add to vector store
+        chunks_created = vector_store.add_chunks(chunks)
+        
+        return MultiSourceIngestResponse(
+            status="success",
+            source_type="youtube",
+            chunks_created=chunks_created,
+            message=f"Successfully indexed {len(request.video_urls)} video(s) with {chunks_created} chunks"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"YouTube ingestion failed: {str(e)}"
+        )
+
+
+@router.post("/ingest/database", response_model=MultiSourceIngestResponse)
+async def ingest_database(request: DatabaseIngestRequest):
+    """
+    Ingest data from SQL database.
+    
+    Args:
+        request: DatabaseIngestRequest with connection and query details
+        
+    Returns:
+        MultiSourceIngestResponse with status
+    """
+    try:
+        # Ensure collection exists
+        vector_store.create_collection()
+        
+        # Process database
+        if request.query:
+            chunks = database_processor.process_sql_query(
+                connection_string=request.connection_string,
+                query=request.query,
+                source_name=request.source_name
+            )
+        elif request.table_name:
+            chunks = database_processor.process_sql_table(
+                connection_string=request.connection_string,
+                table_name=request.table_name,
+                limit=request.limit
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Either 'query' or 'table_name' must be provided"
+            )
+        
+        if not chunks:
+            raise HTTPException(
+                status_code=400,
+                detail="No data could be extracted from the database"
+            )
+        
+        # Add to vector store
+        chunks_created = vector_store.add_chunks(chunks)
+        
+        return MultiSourceIngestResponse(
+            status="success",
+            source_type="database",
+            chunks_created=chunks_created,
+            message=f"Successfully indexed database with {chunks_created} chunks"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database ingestion failed: {str(e)}"
+        )
+
+
+@router.post("/ingest/mongodb", response_model=MultiSourceIngestResponse)
+async def ingest_mongodb(request: MongoDBIngestRequest):
+    """
+    Ingest data from MongoDB.
+    
+    Args:
+        request: MongoDBIngestRequest with connection and collection details
+        
+    Returns:
+        MultiSourceIngestResponse with status
+    """
+    try:
+        # Ensure collection exists
+        vector_store.create_collection()
+        
+        # Process MongoDB
+        chunks = database_processor.process_mongodb_collection(
+            connection_string=request.connection_string,
+            database_name=request.database_name,
+            collection_name=request.collection_name,
+            query_filter=request.query_filter,
+            limit=request.limit
+        )
+        
+        if not chunks:
+            raise HTTPException(
+                status_code=400,
+                detail="No data could be extracted from MongoDB"
+            )
+        
+        # Add to vector store
+        chunks_created = vector_store.add_chunks(chunks)
+        
+        return MultiSourceIngestResponse(
+            status="success",
+            source_type="mongodb",
+            chunks_created=chunks_created,
+            message=f"Successfully indexed MongoDB collection with {chunks_created} chunks"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"MongoDB ingestion failed: {str(e)}"
         )

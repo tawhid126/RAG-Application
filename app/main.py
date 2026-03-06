@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="Security Manual Assistant",
-    description="RAG-powered assistant for Teletek and Duevi security system manuals",
-    version="1.0.0",
+    title="Universal Knowledge Assistant",
+    description="Multi-Source RAG system with PDF, Website, YouTube, and Database support - featuring streaming responses and conversation memory",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -46,16 +46,28 @@ if static_path.exists():
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    logger.info("Starting Security Manual Assistant...")
-    logger.info(f"Qdrant host: {settings.qdrant_host}:{settings.qdrant_port}")
+    logger.info("=" * 60)
+    logger.info("Starting Universal Knowledge Assistant (Multi-Source RAG)")
+    logger.info("=" * 60)
+    logger.info(f"Version: 2.0.0")
+    logger.info(f"Qdrant: {settings.qdrant_host}:{settings.qdrant_port}")
     logger.info(f"Collection: {settings.qdrant_collection_name}")
-    logger.info(f"Manuals directory: {settings.manuals_dir}")
+    logger.info(f"Data directory: {settings.manuals_dir}")
+    logger.info(f"Features: PDF | Website | YouTube | Database")
+    logger.info(f"Streaming: Enabled | Conversation Memory: Enabled")
+    logger.info("=" * 60)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    logger.info("Shutting down Security Manual Assistant...")
+    logger.info("Shutting down Universal Knowledge Assistant...")
+    logger.info("Cleaning up conversation sessions...")
+    from app.services import get_conversation_memory
+    memory = get_conversation_memory()
+    cleaned = memory.cleanup_old_sessions()
+    logger.info(f"Cleaned {cleaned} old sessions")
+    logger.info("Shutdown complete")
 
 
 if __name__ == "__main__":

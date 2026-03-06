@@ -2,9 +2,15 @@
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 python-multipart==0.0.6
+sse-starlette==1.8.2
 
 # OpenAI
 openai==1.12.0
+
+# LangChain for advanced RAG
+langchain==0.1.6
+langchain-openai==0.0.5
+langchain-community==0.0.20
 
 # Vector database
 qdrant-client==1.7.0
@@ -12,6 +18,20 @@ qdrant-client==1.7.0
 # PDF processing
 PyMuPDF==1.23.8
 pypdf==4.0.1
+
+# Web scraping
+beautifulsoup4==4.12.3
+playwright==1.41.2
+requests==2.31.0
+
+# YouTube transcription
+youtube-transcript-api==0.6.2
+pytube==15.0.0
+
+# Database connectors
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+pymongo==4.6.1
 
 # Data processing
 tiktoken==0.5.2

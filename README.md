@@ -1,149 +1,311 @@
-# 🔒 Security Manual Assistant
+# 🌐 Universal Knowledge Assistant
 
-A Retrieval-Augmented Generation (RAG) application for quickly finding accurate answers from Teletek and Duevi security system technical manuals.
+## Multi-Source RAG System with Streaming & Conversation Memory
 
-## Features
+> **Version 2.0** - Advanced Retrieval-Augmented Generation system supporting PDF, Website, YouTube, and Database sources with real-time streaming responses and conversational AI.
 
-- **PDF Processing**: Automatically extracts and chunks text from PDF manuals
-- **Semantic Search**: Uses OpenAI embeddings with Qdrant vector database for accurate retrieval
-- **AI-Powered Answers**: Generates grounded responses using GPT-4o-mini
-- **Document Citations**: Returns manual name and page number for every answer
-- **Web Interface**: Clean, responsive chat interface for technicians
-- **Query Logging**: Tracks all queries and responses for analysis
-- **Docker Ready**: Complete containerized deployment
+---
 
-## Architecture
+## ⚡ Quick Start
+
+**Get started in 5 minutes:** [QUICKSTART.md](QUICKSTART.md)
+
+**Full documentation:** [README_ADVANCED.md](README_ADVANCED.md)
+
+**Upgrading from v1.0?** [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+
+---
+
+## ✨ Key Features
+
+### 🎯 Multi-Source Knowledge Base
+- 📄 **PDF Documents** - Extract from technical manuals, reports, documentation
+- 🌐 **Websites** - Scrape and index web content
+- 🎥 **YouTube Videos** - Process video transcripts
+- 🗄️ **Databases** - Ingest from SQL and MongoDB
+
+### 💬 Advanced Conversation
+- **Streaming Responses** - Real-time answer generation
+- **Conversation Memory** - Context-aware multi-turn dialogues  
+- **Session Management** - Persistent conversation history
+
+### 🔍 Intelligent Search
+- **Semantic Search** - OpenAI embeddings with Qdrant
+- **Source Citations** - Full attribution with relevance scores
+- **Brand Filtering** - Query specific knowledge domains
+
+### 🎨 Modern Interface
+- **Responsive Web UI** - Clean, intuitive chat interface
+- **Real-time Updates** - Progressive streaming display
+- **Multi-tab Management** - Organize different source types
+
+---
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Web Interface                           │
-│                   (HTML/CSS/JavaScript)                     │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                     FastAPI Backend                         │
-│  ┌──────────────┬──────────────┬──────────────────────────┐ │
-│  │ PDF Processor│ RAG Service  │ Logging Service          │ │
-│  └──────────────┴──────────────┴──────────────────────────┘ │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-         ┌────────────────┼────────────────┐
-         ▼                ▼                ▼
-┌─────────────────┐ ┌─────────────┐ ┌──────────────┐
-│  Qdrant         │ │  OpenAI API │ │ File Storage │
-│  Vector Store   │ │  Embeddings │ │ (PDFs/Logs)  │
-└─────────────────┘ │  & Chat     │ └──────────────┘
-                    └─────────────┘
+│              Web Interface (Streaming UI)                   │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│                   FastAPI + SSE Backend                     │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  Multi-Source Processors                             │  │
+│  │  • PDF Processor    • Website Scraper                │  │
+│  │  • YouTube API      • Database Connectors            │  │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  RAG Engine with Conversation Memory                 │  │
+│  │  • Streaming Response  • Context Management          │  │
+│  │  • Citation Tracking   • Session Storage             │  │
+│  └──────────────────────────────────────────────────────┘  │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+  ┌──────────────┐  ┌────────────┐  ┌──────────────┐
+  │   Qdrant     │  │  OpenAI    │  │ Data Sources │
+  │ Vector Store │  │ GPT-4 API  │  │ PDF/Web/YT   │
+  └──────────────┘  └────────────┘  └──────────────┘
 ```
 
-## Quick Start
+---
+
+## 🚀 Installation
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- OpenAI API key
+- Python 3.9+
+- Docker & Docker Compose
+- OpenAI API Key
 
-### 1. Clone and Configure
+### Setup
 
 ```bash
-cd ~/projects/security-assistant
+# 1. Install dependencies
+pip install -r requirements.txt
 
-# Copy environment template
+# 2. Configure environment
 cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
 
-# Edit .env and add your OpenAI API key
-nano .env
-```
-
-### 2. Start Services
-
-```bash
+# 3. Start vector database
 docker-compose up -d
+
+# 4. Run application
+python -m app.main
+
+# 5. Open browser
+open http://localhost:8000
 ```
 
-### 3. Access the Application
+---
 
-- **Web Interface**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-- **Qdrant Dashboard**: http://localhost:6333/dashboard
+---
 
-### 4. Add Manuals
+## 📚 Usage Examples
 
-Place your PDF files in the appropriate directories:
-- `data/manuals/teletek/` - Teletek manuals
-- `data/manuals/duevi/` - Duevi manuals
+### Web Interface
 
-Or upload via the web interface settings panel.
+1. **Ask Questions**: Type your query in the chat input
+2. **Watch it Stream**: See answers appear in real-time
+3. **View Sources**: Citations show exactly where information came from
+4. **Continue Conversation**: Ask follow-up questions naturally
 
-### 5. Index Manuals
+### Add Knowledge Sources
 
+#### PDF
 ```bash
-# Via API
-curl -X POST http://localhost:8000/api/ingest \
-     -H "Content-Type: application/json" \
-     -d '{"brand": "teletek"}'
-
-curl -X POST http://localhost:8000/api/ingest \
-     -H "Content-Type: application/json" \
-     -d '{"brand": "duevi"}'
+curl -X POST "http://localhost:8000/api/upload" \
+  -F "file=@manual.pdf" \
+  -F "brand=technical"
 ```
 
-Or use the "Index Manuals" buttons in the web interface settings.
+#### Website
+```bash
+curl -X POST "http://localhost:8000/api/ingest/website" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://docs.example.com"],
+    "source_name": "Documentation"
+  }'
+```
 
-## API Endpoints
+#### YouTube
+```bash
+curl -X POST "http://localhost:8000/api/ingest/youtube" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "video_urls": ["https://youtube.com/watch?v=VIDEO_ID"],
+    "languages": ["en"]
+  }'
+```
+
+#### Database
+```bash
+curl -X POST "http://localhost:8000/api/ingest/database" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connection_string": "postgresql://user:pass@localhost/db",
+    "table_name": "products"
+  }'
+```
+
+### Query with Streaming
+
+```python
+import requests
+import json
+
+response = requests.post(
+    "http://localhost:8000/api/conversation/query/stream",
+    json={"query": "What is machine learning?"},
+    stream=True
+)
+
+for line in response.iter_lines():
+    if line:
+        data = json.loads(line)
+        if data["type"] == "content":
+            print(data["data"], end="", flush=True)
+```
+
+---
+
+## 📖 Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[README_ADVANCED.md](README_ADVANCED.md)** - Complete feature documentation
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Upgrade from v1.0
+- **[API Docs](http://localhost:8000/docs)** - Interactive API documentation
+
+---
+
+## 🎯 Key Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | System health check |
-| `/api/query` | POST | Query the RAG system |
-| `/api/ingest` | POST | Process and index manuals |
-| `/api/upload` | POST | Upload a PDF manual |
-| `/api/stats` | GET | Get system statistics |
-| `/api/brand/{brand}` | DELETE | Delete brand data |
-| `/api/init` | POST | Initialize database |
+| `/api/query` | POST | Basic query |
+| `/api/query/stream` | POST | Streaming query |
+| `/api/conversation/query/stream` | POST | Conversation with streaming |
+| `/api/ingest/website` | POST | Ingest websites |
+| `/api/ingest/youtube` | POST | Ingest YouTube videos |
+| `/api/ingest/database` | POST | Ingest SQL database |
+| `/api/ingest/mongodb` | POST | Ingest MongoDB |
 
-### Query Example
+---
+
+## 🔧 Configuration
+
+Key environment variables:
+
+```env
+# Required
+OPENAI_API_KEY=your_key_here
+
+# Vector Database
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+QDRANT_COLLECTION_NAME=universal_knowledge
+
+# RAG Settings
+CHUNK_SIZE=500
+CHUNK_OVERLAP=50
+TOP_K_RESULTS=5
+EMBEDDING_MODEL=text-embedding-3-small
+CHAT_MODEL=gpt-4o-mini
+```
+
+See [.env.example](.env.example) for all options.
+
+---
+
+## 🧪 Testing
 
 ```bash
+# Run tests
+pytest tests/ -v
+
+# Test health endpoint
+curl http://localhost:8000/api/health
+
+# Test query
 curl -X POST http://localhost:8000/api/query \
-     -H "Content-Type: application/json" \
-     -d '{"query": "How do I wire a motion sensor?"}'
+  -H "Content-Type: application/json" \
+  -d '{"query": "test question"}'
 ```
 
-**Response:**
-```json
-{
-  "answer": "To wire a motion sensor...",
-  "citations": [
-    {
-      "manual_name": "Eclipse32-Installation",
-      "page_number": 15,
-      "brand": "teletek",
-      "relevance_score": 0.89
-    }
-  ],
-  "query": "How do I wire a motion sensor?",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
+---
 
-## Local Development
-
-### Without Docker
+## 🐋 Docker Deployment
 
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Build and start all services
+docker-compose up -d --build
 
-# Install dependencies
-pip install -r requirements.txt
+# View logs
+docker-compose logs -f app
 
-# Start Qdrant (separate terminal)
-docker run -p 6333:6333 qdrant/qdrant
+# Stop services
+docker-compose down
 
-# Configure environment
-cp .env.example .env
+# Clean everything (including data)
+docker-compose down -v
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+---
+
+## 📝 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🆘 Support
+
+- **Documentation**: See [README_ADVANCED.md](README_ADVANCED.md)
+- **Issues**: Create a GitHub issue
+- **Logs**: Check `./logs/` directory
+
+---
+
+## 🎉 What's New in v2.0
+
+- ✅ Multi-source support (PDF, Web, YouTube, Database)
+- ✅ Real-time streaming responses
+- ✅ Conversation memory with context
+- ✅ Enhanced citations with source URLs
+- ✅ Modern UI with tabs and sessions
+- ✅ Better error handling and logging
+- ✅ Backward compatible with v1.0 data
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Qdrant](https://qdrant.tech/)
+- [OpenAI](https://openai.com/)
+- [LangChain](https://langchain.com/)
+
+---
+
+**Made with ❤️ for AI-powered knowledge management**
+
 # Edit .env with your settings
 
 # Run the application

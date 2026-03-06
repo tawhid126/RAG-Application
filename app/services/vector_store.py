@@ -90,17 +90,25 @@ class VectorStore:
         points = []
         for chunk, embedding in zip(chunks, embeddings):
             point_id = str(uuid.uuid4())
+            
+            payload = {
+                "text": chunk.text,
+                "brand": chunk.metadata.brand,
+                "manual_name": chunk.metadata.manual_name,
+                "page_number": chunk.metadata.page_number,
+                "chunk_index": chunk.metadata.chunk_index,
+                "source_type": chunk.metadata.source_type,
+            }
+            
+            # Add source_url if available
+            if chunk.metadata.source_url:
+                payload["source_url"] = chunk.metadata.source_url
+            
             points.append(
                 models.PointStruct(
                     id=point_id,
                     vector=embedding,
-                    payload={
-                        "text": chunk.text,
-                        "brand": chunk.metadata.brand,
-                        "manual_name": chunk.metadata.manual_name,
-                        "page_number": chunk.metadata.page_number,
-                        "chunk_index": chunk.metadata.chunk_index
-                    }
+                    payload=payload
                 )
             )
         
@@ -167,7 +175,9 @@ class VectorStore:
                 "brand": result.payload["brand"],
                 "manual_name": result.payload["manual_name"],
                 "page_number": result.payload["page_number"],
-                "score": result.score
+                "score": result.score,
+                "source_type": result.payload.get("source_type", "pdf"),
+                "source_url": result.payload.get("source_url")
             })
         
         return formatted_results

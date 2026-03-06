@@ -89,7 +89,8 @@ class PDFProcessor:
                         brand=brand,
                         manual_name=manual_name,
                         page_number=page_number,
-                        chunk_index=chunk_index
+                        chunk_index=chunk_index,
+                        source_type="pdf"
                     )
                 )
                 
@@ -121,7 +122,8 @@ class PDFProcessor:
                     brand=brand,
                     manual_name=manual_name,
                     page_number=page_number,
-                    chunk_index=chunk_index
+                    chunk_index=chunk_index,
+                    source_type="pdf"
                 )
             )
     
