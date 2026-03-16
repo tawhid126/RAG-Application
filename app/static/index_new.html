@@ -11,7 +11,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>🌐 Universal Knowledge Assistant</h1>
+                <h1>Universal Knowledge Assistant</h1>
                 <p class="subtitle">Multi-Source RAG System - PDF, Web, YouTube, Database</p>
             </div>
             <div class="header-actions">
@@ -23,8 +23,8 @@
                     <option value="youtube">YouTube</option>
                     <option value="database">Database</option>
                 </select>
-                <button id="newChatBtn" class="icon-btn" title="New Conversation">➕</button>
-                <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+                <button id="newChatBtn" class="icon-btn" title="New Conversation">New</button>
+                <button id="settingsBtn" class="icon-btn" title="Settings">Settings</button>
             </div>
         </header>
 
@@ -34,13 +34,13 @@
                 <!-- Welcome message -->
                 <div class="message assistant-message">
                     <div class="message-content">
-                        <p>👋 Hello! I'm your Universal Knowledge Assistant with conversation memory.</p>
+                        <p>Hello! I'm your Universal Knowledge Assistant with conversation memory.</p>
                         <p>I can answer questions from multiple sources:</p>
                         <ul>
-                            <li>📄 <strong>PDF Documents</strong> - Technical manuals and documents</li>
-                            <li>🌐 <strong>Websites</strong> - Web content and articles</li>
-                            <li>🎥 <strong>YouTube Videos</strong> - Video transcripts</li>
-                            <li>🗄️ <strong>Databases</strong> - SQL and MongoDB data</li>
+                            <li><strong>PDF Documents</strong> - Technical manuals and documents</li>
+                            <li><strong>Websites</strong> - Web content and articles</li>
+                            <li><strong>YouTube Videos</strong> - Video transcripts</li>
+                            <li><strong>Databases</strong> - SQL and MongoDB data</li>
                         </ul>
                         <p>Your conversation is remembered, so you can ask follow-up questions naturally!</p>
                     </div>
@@ -59,12 +59,12 @@
                     required
                 >
                 <button type="submit" id="sendBtn">
-                    <span class="send-icon">➤</span>
+                    <span class="send-icon">Send</span>
                 </button>
             </form>
             <div class="session-info">
                 Session: <span id="sessionId">New Session</span> 
-                <button id="clearSession" class="small-btn" title="Clear conversation">🗑️</button>
+                <button id="clearSession" class="small-btn" title="Clear conversation">Clear</button>
             </div>
         </footer>
     </div>
@@ -73,7 +73,7 @@
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ Settings & Data Management</h2>
+                <h2>Settings & Data Management</h2>
                 <button class="close-btn" id="closeSettings">&times;</button>
             </div>
             <div class="modal-body">
@@ -98,10 +98,10 @@
 
                 <!-- Tab Navigation -->
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="pdf">📄 PDF</button>
-                    <button class="tab-btn" data-tab="website">🌐 Website</button>
-                    <button class="tab-btn" data-tab="youtube">🎥 YouTube</button>
-                    <button class="tab-btn" data-tab="database">🗄️ Database</button>
+                    <button class="tab-btn active" data-tab="pdf">PDF</button>
+                    <button class="tab-btn" data-tab="website">Website</button>
+                    <button class="tab-btn" data-tab="youtube">YouTube</button>
+                    <button class="tab-btn" data-tab="database">Database</button>
                 </div>
 
                 <!-- PDF Tab -->

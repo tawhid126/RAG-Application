@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - Universal Knowledge Assistant
+#  Quick Start Guide - Universal Knowledge Assistant
 
 Get your Multi-Source RAG system running in 5 minutes!
 
@@ -64,7 +64,7 @@ Navigate to: **http://localhost:8000**
 
 #### Option 1: Upload a PDF
 
-1. Click the settings icon (⚙️)
+1. Click the settings icon ()
 2. Go to "PDF" tab
 3. Select a category and your PDF file
 4. Click "Upload & Index"
@@ -204,10 +204,10 @@ tail -f logs/app.log
 
 ## Next Steps
 
-- 📖 Read [README_ADVANCED.md](README_ADVANCED.md) for detailed documentation
-- 🔧 Explore [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) if upgrading
-- 🌐 Visit API docs: http://localhost:8000/docs
-- 💡 Check example queries in the web interface
+-  Read [README.md](README.md) for detailed documentation
+-  Explore [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) if upgrading
+-  Visit API docs: http://localhost:8000/docs
+-  Check example queries in the web interface
 
 ## Quick Commands Cheatsheet
 
@@ -236,9 +236,9 @@ docker-compose down -v && docker-compose up -d
 
 ## Need Help?
 
-- 📚 Full documentation: [README_ADVANCED.md](README_ADVANCED.md)
-- 🐛 Report issues on GitHub
-- 💬 Check application logs in `./logs/`
-- 🔍 API documentation: http://localhost:8000/docs
+-  Full documentation: [README.md](README.md)
+-  Report issues on GitHub
+-  Check application logs in `./logs/`
+-  API documentation: http://localhost:8000/docs
 
-Happy querying! 🎉
+Happy querying! 

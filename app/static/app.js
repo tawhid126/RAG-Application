@@ -260,7 +260,7 @@ async function handleUpload(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.textContent = `✓ ${data.message}`;
+            statusDiv.textContent = data.message;
             statusDiv.className = 'upload-status success';
             uploadForm.reset();
         } else {
@@ -268,7 +268,7 @@ async function handleUpload(e) {
         }
         
     } catch (error) {
-        statusDiv.textContent = `✗ Error: ${error.message}`;
+        statusDiv.textContent = `Error: ${error.message}`;
         statusDiv.className = 'upload-status error';
     }
 }
@@ -294,14 +294,14 @@ async function ingestBrand(brand) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.textContent = `✓ ${data.message}`;
+            statusDiv.textContent = data.message;
             statusDiv.className = 'ingest-status success';
         } else {
             throw new Error(data.detail || 'Ingestion failed');
         }
         
     } catch (error) {
-        statusDiv.textContent = `✗ Error: ${error.message}`;
+        statusDiv.textContent = `Error: ${error.message}`;
         statusDiv.className = 'ingest-status error';
     }
 }

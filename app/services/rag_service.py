@@ -1,8 +1,8 @@
 """RAG service for retrieval-augmented generation."""
-from openai import OpenAI
 from typing import Optional, AsyncGenerator, List, Dict
 from datetime import datetime
 import json
+import requests
 
 from app.config import get_settings
 from app.services.vector_store import VectorStore
@@ -34,9 +34,100 @@ Answer the user's question based ONLY on the above context. If the answer is not
     
     def __init__(self):
         self.settings = get_settings()
-        self.client = OpenAI(api_key=self.settings.openai_api_key)
+        self.api_key = self.settings.google_api_key
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta"
+        self.session = requests.Session()
         self.vector_store = VectorStore()
         self.conversation_memory = get_conversation_memory()
+
+    def _normalize_model_name(self) -> str:
+        """Ensure model name includes models/ prefix."""
+        if self.settings.chat_model.startswith("models/"):
+            return self.settings.chat_model
+        return f"models/{self.settings.chat_model}"
+
+    def _to_gemini_contents(self, messages: List[Dict[str, str]]) -> List[Dict[str, object]]:
+        """Convert OpenAI-style message list to Gemini contents format."""
+        contents: List[Dict[str, object]] = []
+        for message in messages:
+            role = message.get("role", "user")
+            gemini_role = "user" if role == "user" else "model"
+            contents.append({
+                "role": gemini_role,
+                "parts": [{"text": message.get("content", "")}]
+            })
+        return contents
+
+    def _generate_response(self, system_prompt: str, messages: List[Dict[str, str]]) -> str:
+        """Generate a non-streaming Gemini response."""
+        model_name = self._normalize_model_name()
+        url = (
+            f"{self.base_url}/{model_name}:generateContent"
+            f"?key={self.api_key}"
+        )
+
+        payload = {
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "contents": self._to_gemini_contents(messages),
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1000
+            }
+        }
+
+        response = self.session.post(url, json=payload, timeout=120)
+        response.raise_for_status()
+        data = response.json()
+
+        candidates = data.get("candidates", [])
+        if not candidates:
+            return "I couldn't generate a response at the moment."
+
+        parts = candidates[0].get("content", {}).get("parts", [])
+        return "".join(part.get("text", "") for part in parts)
+
+    def _stream_response(self, system_prompt: str, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
+        """Stream Gemini response chunks as text."""
+        model_name = self._normalize_model_name()
+        url = (
+            f"{self.base_url}/{model_name}:streamGenerateContent"
+            f"?alt=sse&key={self.api_key}"
+        )
+
+        payload = {
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "contents": self._to_gemini_contents(messages),
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1000
+            }
+        }
+
+        with self.session.post(url, json=payload, stream=True, timeout=300) as response:
+            response.raise_for_status()
+            for raw_line in response.iter_lines(decode_unicode=True):
+                if not raw_line or not raw_line.startswith("data: "):
+                    continue
+                data_line = raw_line[6:]
+                if data_line.strip() == "[DONE]":
+                    continue
+                try:
+                    chunk = json.loads(data_line)
+                except json.JSONDecodeError:
+                    continue
+
+                candidates = chunk.get("candidates", [])
+                if not candidates:
+                    continue
+                parts = candidates[0].get("content", {}).get("parts", [])
+                for part in parts:
+                    text = part.get("text")
+                    if text:
+                        yield text
     
     def _format_context(self, search_results: list[dict]) -> str:
         """Format search results into context string for the LLM."""
@@ -114,17 +205,10 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Step 3: Generate answer using LLM
         system_prompt = self.SYSTEM_PROMPT.format(context=context)
         
-        response = self.client.chat.completions.create(
-            model=self.settings.chat_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
-            ],
-            temperature=0.1,  # Low temperature for factual responses
-            max_tokens=1000
+        answer = self._generate_response(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": query}]
         )
-        
-        answer = response.choices[0].message.content
         
         # Step 4: Extract citations
         citations = self._extract_citations(search_results)
@@ -137,10 +221,12 @@ Answer the user's question based ONLY on the above context. If the answer is not
         )
     
     def is_openai_configured(self) -> bool:
-        """Check if OpenAI API is properly configured."""
+        """Check if Gemini API is properly configured."""
         try:
-            # Try a minimal API call
-            self.client.models.list()
+            model_name = self._normalize_model_name()
+            url = f"{self.base_url}/{model_name}?key={self.api_key}"
+            response = self.session.get(url, timeout=30)
+            response.raise_for_status()
             return True
         except Exception:
             return False
@@ -191,25 +277,14 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Step 3: Stream answer using LLM
         system_prompt = self.SYSTEM_PROMPT.format(context=context)
         
-        stream = self.client.chat.completions.create(
-            model=self.settings.chat_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
-            ],
-            temperature=0.1,
-            max_tokens=1000,
-            stream=True
-        )
-        
-        # Stream the response
-        for chunk in stream:
-            if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                yield json.dumps({
-                    "type": "content",
-                    "data": content
-                }) + "\n"
+        for content in self._stream_response(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": query}]
+        ):
+            yield json.dumps({
+                "type": "content",
+                "data": content
+            }) + "\n"
         
         # Signal completion
         yield json.dumps({"type": "done"}) + "\n"
@@ -271,18 +346,14 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Step 4: Generate answer with conversation context
         system_prompt = self.SYSTEM_PROMPT.format(context=context)
         
-        messages = [{"role": "system", "content": system_prompt}]
+        messages = []
         messages.extend(history[:-1])  # Exclude the last user message as we'll add it
         messages.append({"role": "user", "content": query})
-        
-        response = self.client.chat.completions.create(
-            model=self.settings.chat_model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=1000
+
+        answer = self._generate_response(
+            system_prompt=system_prompt,
+            messages=messages
         )
-        
-        answer = response.choices[0].message.content
         
         # Add assistant response to history
         self.conversation_memory.add_message(
@@ -372,28 +443,21 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Step 4: Stream answer with conversation context
         system_prompt = self.SYSTEM_PROMPT.format(context=context)
         
-        messages = [{"role": "system", "content": system_prompt}]
+        messages = []
         messages.extend(history[:-1])
         messages.append({"role": "user", "content": query})
-        
-        stream = self.client.chat.completions.create(
-            model=self.settings.chat_model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=1000,
-            stream=True
-        )
-        
+
         # Stream and collect the response
         full_answer = []
-        for chunk in stream:
-            if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                full_answer.append(content)
-                yield json.dumps({
-                    "type": "content",
-                    "data": content
-                }) + "\n"
+        for content in self._stream_response(
+            system_prompt=system_prompt,
+            messages=messages
+        ):
+            full_answer.append(content)
+            yield json.dumps({
+                "type": "content",
+                "data": content
+            }) + "\n"
         
         # Add complete answer to conversation history
         self.conversation_memory.add_message(

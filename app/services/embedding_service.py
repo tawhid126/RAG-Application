@@ -1,17 +1,40 @@
-"""Embedding service using OpenAI API."""
-from openai import OpenAI
-from typing import Optional
+"""Embedding service using Gemini embedding API."""
+import requests
 
 from app.config import get_settings
 
 
 class EmbeddingService:
-    """Generate embeddings using OpenAI's embedding models."""
+    """Generate embeddings using Gemini embedding models."""
     
     def __init__(self):
         self.settings = get_settings()
-        self.client = OpenAI(api_key=self.settings.openai_api_key)
+        self.api_key = self.settings.google_api_key
         self.model = self.settings.embedding_model
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta"
+        self.session = requests.Session()
+
+    def _normalize_model_name(self) -> str:
+        """Ensure model name includes the required models/ prefix."""
+        if self.model.startswith("models/"):
+            return self.model
+        return f"models/{self.model}"
+
+    def _embed_text(self, text: str) -> list[float]:
+        """Call Gemini embedContent for a single text input."""
+        model_name = self._normalize_model_name()
+        url = (
+            f"{self.base_url}/{model_name}:embedContent"
+            f"?key={self.api_key}"
+        )
+        payload = {
+            "model": model_name,
+            "content": {"parts": [{"text": text}]}
+        }
+        response = self.session.post(url, json=payload, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        return data["embedding"]["values"]
     
     def get_embedding(self, text: str) -> list[float]:
         """
@@ -23,11 +46,7 @@ class EmbeddingService:
         Returns:
             Embedding vector as list of floats
         """
-        response = self.client.embeddings.create(
-            input=text,
-            model=self.model
-        )
-        return response.data[0].embedding
+        return self._embed_text(text)
     
     def get_embeddings_batch(
         self,
@@ -45,31 +64,38 @@ class EmbeddingService:
             List of embedding vectors
         """
         all_embeddings = []
+        model_name = self._normalize_model_name()
         
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i + batch_size]
-            response = self.client.embeddings.create(
-                input=batch,
-                model=self.model
+            url = (
+                f"{self.base_url}/{model_name}:batchEmbedContents"
+                f"?key={self.api_key}"
             )
-            
-            # Sort by index to maintain order
-            batch_embeddings = [None] * len(batch)
-            for item in response.data:
-                batch_embeddings[item.index] = item.embedding
-            
-            all_embeddings.extend(batch_embeddings)
+            payload = {
+                "requests": [
+                    {
+                        "model": model_name,
+                        "content": {"parts": [{"text": text}]}
+                    }
+                    for text in batch
+                ]
+            }
+            response = self.session.post(url, json=payload, timeout=120)
+            response.raise_for_status()
+            data = response.json()
+            all_embeddings.extend([item["values"] for item in data.get("embeddings", [])])
         
         return all_embeddings
     
     def get_dimension(self) -> int:
         """Get the embedding dimension for the current model."""
-        # text-embedding-3-small: 1536 dimensions
-        # text-embedding-3-large: 3072 dimensions
-        # text-embedding-ada-002: 1536 dimensions
+        # text-embedding-004: 768 dimensions
+        # embedding-001: 768 dimensions
         model_dimensions = {
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072,
-            "text-embedding-ada-002": 1536,
+            "text-embedding-004": 768,
+            "models/text-embedding-004": 768,
+            "embedding-001": 768,
+            "models/embedding-001": 768,
         }
-        return model_dimensions.get(self.model, 1536)
+        return model_dimensions.get(self.model, 768)

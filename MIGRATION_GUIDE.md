@@ -7,11 +7,11 @@ This guide helps you upgrade from the basic RAG system to the advanced Multi-Sou
 ## What's New
 
 ### 1. **Multi-Source Support**
-- ✅ PDF (existing, enhanced)
-- ✅ Website scraping
-- ✅ YouTube transcripts
-- ✅ SQL databases
-- ✅ MongoDB
+-  PDF (existing, enhanced)
+-  Website scraping
+-  YouTube transcripts
+-  SQL databases
+-  MongoDB
 
 ### 2. **Streaming Responses**
 - Real-time answer generation
@@ -344,19 +344,19 @@ server {
 
 ## Getting Help
 
-- Review `README_ADVANCED.md` for detailed documentation
+- Review `README.md` for detailed documentation
 - Check application logs: `./logs/`
 - Create an issue on GitHub
 - Review API documentation: `http://localhost:8000/docs`
 
 ## Summary
 
-✅ Install new dependencies
-✅ Update environment variables
-✅ Restart services
-✅ Test basic functionality
-✅ Test new features
-✅ Update frontend
-✅ Monitor performance
+ Install new dependencies
+ Update environment variables
+ Restart services
+ Test basic functionality
+ Test new features
+ Update frontend
+ Monitor performance
 
 Your basic RAG system is now a powerful Multi-Source RAG system with streaming and conversation capabilities!

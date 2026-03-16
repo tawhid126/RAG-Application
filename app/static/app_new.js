@@ -78,16 +78,16 @@ async function checkHealth() {
         const response = await fetch('/api/health');
         const data = await response.json();
         
-        document.getElementById('apiStatus').textContent = '✅ Connected';
+        document.getElementById('apiStatus').textContent = 'Connected';
         document.getElementById('apiStatus').className = 'status-value success';
         
-        document.getElementById('qdrantStatus').textContent = data.qdrant_connected ? '✅ Connected' : '❌ Disconnected';
+        document.getElementById('qdrantStatus').textContent = data.qdrant_connected ? 'Connected' : 'Disconnected';
         document.getElementById('qdrantStatus').className = `status-value ${data.qdrant_connected ? 'success' : 'error'}`;
         
-        document.getElementById('openaiStatus').textContent = data.openai_configured ? '✅ Configured' : '❌ Not Configured';
+        document.getElementById('openaiStatus').textContent = data.openai_configured ? 'Configured' : 'Not Configured';
         document.getElementById('openaiStatus').className = `status-value ${data.openai_configured ? 'success' : 'error'}`;
     } catch (error) {
-        document.getElementById('apiStatus').textContent = '❌ Error';
+        document.getElementById('apiStatus').textContent = 'Error';
         document.getElementById('apiStatus').className = 'status-value error';
     }
 }
@@ -174,7 +174,7 @@ async function handleQuery(e) {
         
     } catch (error) {
         console.error('Query error:', error);
-        contentDiv.innerHTML = '<p class="error">❌ Error processing query. Please try again.</p>';
+        contentDiv.innerHTML = '<p class="error">Error processing query. Please try again.</p>';
     } finally {
         isLoading = false;
         sendBtn.disabled = false;
@@ -208,7 +208,7 @@ function addMessage(text, role, withCitations = false) {
 function renderCitations(citations, container) {
     if (!citations || citations.length === 0) return;
     
-    container.innerHTML = '<h4>📚 Sources:</h4>';
+    container.innerHTML = '<h4>Sources:</h4>';
     const ul = document.createElement('ul');
     
     citations.forEach(citation => {
@@ -229,13 +229,13 @@ function renderCitations(citations, container) {
 // Get Source Icon
 function getSourceIcon(sourceType) {
     const icons = {
-        'pdf': '📄',
-        'website': '🌐',
-        'youtube': '🎥',
-        'database': '🗄️',
-        'mongodb': '🗄️'
+        'pdf': '[PDF]',
+        'website': '[WEB]',
+        'youtube': '[YT]',
+        'database': '[DB]',
+        'mongodb': '[DB]'
     };
-    return icons[sourceType] || '📄';
+    return icons[sourceType] || '[SRC]';
 }
 
 // Format Markdown (basic)
@@ -310,7 +310,7 @@ function loadConversationFromStorage() {
 async function handleWebsiteIngest(e) {
     e.preventDefault();
     const statusDiv = document.getElementById('websiteStatus');
-    statusDiv.innerHTML = '⏳ Processing...';
+    statusDiv.innerHTML = 'Processing...';
     
     const urls = document.getElementById('websiteUrls').value.split('\n').filter(u => u.trim());
     const sourceName = document.getElementById('websiteName').value.trim() || null;
@@ -325,15 +325,15 @@ async function handleWebsiteIngest(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
             document.getElementById('websiteForm').reset();
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
@@ -341,7 +341,7 @@ async function handleWebsiteIngest(e) {
 async function handleYouTubeIngest(e) {
     e.preventDefault();
     const statusDiv = document.getElementById('youtubeStatus');
-    statusDiv.innerHTML = '⏳ Processing...';
+    statusDiv.innerHTML = 'Processing...';
     
     const urls = document.getElementById('youtubeUrls').value.split('\n').filter(u => u.trim());
     const languages = document.getElementById('youtubeLangs').value.split(',').map(l => l.trim());
@@ -356,15 +356,15 @@ async function handleYouTubeIngest(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
             document.getElementById('youtubeForm').reset();
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
@@ -372,7 +372,7 @@ async function handleYouTubeIngest(e) {
 async function handleSQLIngest(e) {
     e.preventDefault();
     const statusDiv = document.getElementById('sqlStatus');
-    statusDiv.innerHTML = '⏳ Processing...';
+    statusDiv.innerHTML = 'Processing...';
     
     const connection = document.getElementById('sqlConnection').value;
     const table = document.getElementById('sqlTable').value.trim() || null;
@@ -394,15 +394,15 @@ async function handleSQLIngest(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
             document.getElementById('sqlForm').reset();
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
@@ -410,7 +410,7 @@ async function handleSQLIngest(e) {
 async function handleMongoIngest(e) {
     e.preventDefault();
     const statusDiv = document.getElementById('mongoStatus');
-    statusDiv.innerHTML = '⏳ Processing...';
+    statusDiv.innerHTML = 'Processing...';
     
     const connection = document.getElementById('mongoConnection').value;
     const database = document.getElementById('mongoDatabase').value;
@@ -433,15 +433,15 @@ async function handleMongoIngest(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
             document.getElementById('mongoForm').reset();
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
@@ -450,7 +450,7 @@ async function handleMongoIngest(e) {
 async function handleUpload(e) {
     e.preventDefault();
     const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.innerHTML = '⏳ Uploading...';
+    statusDiv.innerHTML = 'Uploading...';
     
     const formData = new FormData();
     formData.append('file', document.getElementById('uploadFile').files[0]);
@@ -465,23 +465,23 @@ async function handleUpload(e) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
             // Auto-index
             setTimeout(() => ingestBrand(document.getElementById('uploadBrand').value), 1000);
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
 
 async function ingestBrand(brand) {
     const statusDiv = document.getElementById('ingestStatus');
-    statusDiv.innerHTML = `⏳ Indexing ${brand}...`;
+    statusDiv.innerHTML = `Indexing ${brand}...`;
     
     try {
         const response = await fetch('/api/ingest', {
@@ -493,21 +493,21 @@ async function ingestBrand(brand) {
         const data = await response.json();
         
         if (response.ok) {
-            statusDiv.innerHTML = `✅ ${data.message}`;
+            statusDiv.innerHTML = data.message;
             statusDiv.className = 'status-message success';
         } else {
-            statusDiv.innerHTML = `❌ ${data.detail}`;
+            statusDiv.innerHTML = data.detail;
             statusDiv.className = 'status-message error';
         }
     } catch (error) {
-        statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        statusDiv.innerHTML = `Error: ${error.message}`;
         statusDiv.className = 'status-message error';
     }
 }
 
 async function loadStats() {
     const container = document.getElementById('statsContainer');
-    container.innerHTML = '⏳ Loading...';
+    container.innerHTML = 'Loading...';
     
     try {
         const response = await fetch('/api/stats');
@@ -526,6 +526,6 @@ async function loadStats() {
             </div>
         `;
     } catch (error) {
-        container.innerHTML = '❌ Error loading stats';
+        container.innerHTML = 'Error loading stats';
     }
 }

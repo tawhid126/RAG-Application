@@ -1,4 +1,4 @@
-# 🌐 Universal Knowledge Assistant
+#  Universal Knowledge Assistant
 
 ## Multi-Source RAG System with Streaming & Conversation Memory
 
@@ -6,42 +6,42 @@
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 **Get started in 5 minutes:** [QUICKSTART.md](QUICKSTART.md)
 
-**Full documentation:** [README_ADVANCED.md](README_ADVANCED.md)
+**Full documentation:** [README.md](README.md)
 
 **Upgrading from v1.0?** [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 🎯 Multi-Source Knowledge Base
-- 📄 **PDF Documents** - Extract from technical manuals, reports, documentation
-- 🌐 **Websites** - Scrape and index web content
-- 🎥 **YouTube Videos** - Process video transcripts
-- 🗄️ **Databases** - Ingest from SQL and MongoDB
+###  Multi-Source Knowledge Base
+-  **PDF Documents** - Extract from technical manuals, reports, documentation
+-  **Websites** - Scrape and index web content
+-  **YouTube Videos** - Process video transcripts
+-  **Databases** - Ingest from SQL and MongoDB
 
-### 💬 Advanced Conversation
+###  Advanced Conversation
 - **Streaming Responses** - Real-time answer generation
 - **Conversation Memory** - Context-aware multi-turn dialogues  
 - **Session Management** - Persistent conversation history
 
-### 🔍 Intelligent Search
+###  Intelligent Search
 - **Semantic Search** - OpenAI embeddings with Qdrant
 - **Source Citations** - Full attribution with relevance scores
 - **Brand Filtering** - Query specific knowledge domains
 
-### 🎨 Modern Interface
+###  Modern Interface
 - **Responsive Web UI** - Clean, intuitive chat interface
 - **Real-time Updates** - Progressive streaming display
 - **Multi-tab Management** - Organize different source types
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -72,7 +72,7 @@
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -104,7 +104,7 @@ open http://localhost:8000
 
 ---
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Web Interface
 
@@ -173,16 +173,16 @@ for line in response.iter_lines():
 
 ---
 
-## 📖 Documentation
+##  Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
-- **[README_ADVANCED.md](README_ADVANCED.md)** - Complete feature documentation
+- **[README.md](README.md)** - Complete feature documentation
 - **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Upgrade from v1.0
 - **[API Docs](http://localhost:8000/docs)** - Interactive API documentation
 
 ---
 
-## 🎯 Key Endpoints
+##  Key Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -197,7 +197,7 @@ for line in response.iter_lines():
 
 ---
 
-## 🔧 Configuration
+##  Configuration
 
 Key environment variables:
 
@@ -222,7 +222,7 @@ See [.env.example](.env.example) for all options.
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ```bash
 # Run tests
@@ -239,7 +239,7 @@ curl -X POST http://localhost:8000/api/query \
 
 ---
 
-## 🐋 Docker Deployment
+##  Docker Deployment
 
 ```bash
 # Build and start all services
@@ -257,7 +257,7 @@ docker-compose down -v
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions welcome! Please:
 
@@ -268,7 +268,7 @@ Contributions welcome! Please:
 
 ---
 
-## 📝 License
+##  License
 
 MIT License - See LICENSE file for details
 
@@ -276,25 +276,25 @@ MIT License - See LICENSE file for details
 
 ## 🆘 Support
 
-- **Documentation**: See [README_ADVANCED.md](README_ADVANCED.md)
+- **Documentation**: See [README.md](README.md)
 - **Issues**: Create a GitHub issue
 - **Logs**: Check `./logs/` directory
 
 ---
 
-## 🎉 What's New in v2.0
+##  What's New in v2.0
 
-- ✅ Multi-source support (PDF, Web, YouTube, Database)
-- ✅ Real-time streaming responses
-- ✅ Conversation memory with context
-- ✅ Enhanced citations with source URLs
-- ✅ Modern UI with tabs and sessions
-- ✅ Better error handling and logging
-- ✅ Backward compatible with v1.0 data
+-  Multi-source support (PDF, Web, YouTube, Database)
+-  Real-time streaming responses
+-  Conversation memory with context
+-  Enhanced citations with source URLs
+-  Modern UI with tabs and sessions
+-  Better error handling and logging
+-  Backward compatible with v1.0 data
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 Built with:
 - [FastAPI](https://fastapi.tiangolo.com/)
@@ -304,7 +304,7 @@ Built with:
 
 ---
 
-**Made with ❤️ for AI-powered knowledge management**
+**Made with  for AI-powered knowledge management**
 
 # Edit .env with your settings
 
