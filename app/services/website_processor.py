@@ -1,15 +1,27 @@
 """Website content processor for RAG ingestion."""
 import requests
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, List
 import logging
 from urllib.parse import urlparse, urljoin
 import hashlib
+import ipaddress
 
 from app.models.schemas import DocumentChunk, ChunkMetadata
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Blocked private/internal IP ranges
+BLOCKED_NETWORKS = [
+    ipaddress.ip_network('10.0.0.0/8'),
+    ipaddress.ip_network('172.16.0.0/12'),
+    ipaddress.ip_network('192.168.0.0/16'),
+    ipaddress.ip_network('127.0.0.0/8'),
+    ipaddress.ip_network('169.254.0.0/16'),
+    ipaddress.ip_network('0.0.0.0/8'),
+]
 
 
 class WebsiteProcessor:
@@ -17,6 +29,26 @@ class WebsiteProcessor:
     
     def __init__(self):
         self.settings = get_settings()
+
+    def _is_safe_url(self, url: str) -> bool:
+        """Check if URL is safe (not targeting internal/private networks)."""
+        try:
+            parsed = urlparse(url)
+            if parsed.scheme not in ('http', 'https'):
+                return False
+            hostname = parsed.hostname
+            if not hostname:
+                return False
+            # Resolve hostname to IP and check against blocked ranges
+            import socket
+            ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+            for network in BLOCKED_NETWORKS:
+                if ip in network:
+                    logger.warning(f"Blocked SSRF attempt to internal IP: {url}")
+                    return False
+            return True
+        except (ValueError, socket.gaierror):
+            return False
     
     def _chunk_text(self, text: str, chunk_size: int = None, overlap: int = None) -> List[str]:
         """Split text into chunks with overlap."""
@@ -71,7 +103,12 @@ class WebsiteProcessor:
         """
         try:
             logger.info(f"Processing URL: {url}")
-            
+
+            # SSRF protection
+            if not self._is_safe_url(url):
+                logger.warning(f"Blocked unsafe URL: {url}")
+                return []
+
             # Fetch the webpage
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -122,24 +159,14 @@ class WebsiteProcessor:
             return []
     
     def process_urls(
-        self, 
-        urls: List[str], 
+        self,
+        urls: List[str],
         source_name: Optional[str] = None
     ) -> List[DocumentChunk]:
-        """
-        Process multiple URLs.
-        
-        Args:
-            urls: List of URLs to scrape
-            source_name: Optional name for the source
-            
-        Returns:
-            List of all DocumentChunk objects
-        """
-        all_chunks = []
-        
-        for url in urls:
-            chunks = self.process_url(url, source_name)
-            all_chunks.extend(chunks)
-        
+        """Process multiple URLs concurrently."""
+        all_chunks: List[DocumentChunk] = []
+        with ThreadPoolExecutor(max_workers=min(len(urls), 5)) as executor:
+            futures = {executor.submit(self.process_url, url, source_name): url for url in urls}
+            for future in as_completed(futures):
+                all_chunks.extend(future.result())
         return all_chunks

@@ -133,20 +133,37 @@ class DatabaseProcessor:
     ) -> List[DocumentChunk]:
         """
         Process entire SQL table.
-        
+
         Args:
             connection_string: Database connection string
             table_name: Name of the table
             limit: Maximum number of rows to process
             columns: Optional list of specific columns to include
-            
+
         Returns:
             List of DocumentChunk objects
         """
-        # Build query
-        cols = ", ".join(columns) if columns else "*"
+        import re
+        # Validate table_name to prevent SQL injection (only allow alphanumeric and underscores)
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table_name):
+            logger.error(f"Invalid table name: {table_name}")
+            return []
+
+        # Validate column names
+        if columns:
+            for col in columns:
+                if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', col):
+                    logger.error(f"Invalid column name: {col}")
+                    return []
+            cols = ", ".join(columns)
+        else:
+            cols = "*"
+
+        # Validate limit
+        limit = max(1, min(int(limit), 10000))
+
         query = f"SELECT {cols} FROM {table_name} LIMIT {limit}"
-        
+
         return self.process_sql_query(
             connection_string=connection_string,
             query=query,

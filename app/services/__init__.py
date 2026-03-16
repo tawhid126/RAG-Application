@@ -8,6 +8,7 @@ from app.services.website_processor import WebsiteProcessor
 from app.services.youtube_processor import YouTubeProcessor
 from app.services.database_processor import DatabaseProcessor
 from app.services.conversation_memory import ConversationMemory, get_conversation_memory
+from app.services.agent_service import AgenticRAGService, get_agent_service
 
 __all__ = [
     "PDFProcessor",
@@ -19,5 +20,7 @@ __all__ = [
     "YouTubeProcessor",
     "DatabaseProcessor",
     "ConversationMemory",
-    "get_conversation_memory"
+    "get_conversation_memory",
+    "AgenticRAGService",
+    "get_agent_service",
 ]

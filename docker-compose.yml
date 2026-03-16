@@ -32,15 +32,16 @@ services:
       - ./data/manuals:/app/data/manuals
       - ./logs:/app/logs
     environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
-      - QDRANT_COLLECTION_NAME=security_manuals
-      - CHUNK_SIZE=500
-      - CHUNK_OVERLAP=50
-      - TOP_K_RESULTS=5
-      - EMBEDDING_MODEL=text-embedding-3-small
-      - CHAT_MODEL=gpt-4o-mini
+      - QDRANT_COLLECTION_NAME=universal_knowledge
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=100
+      - TOP_K_RESULTS=3
+      - EMBEDDING_MODEL=text-embedding-004
+      - CHAT_MODEL=gemini-1.5-flash
       - MANUALS_DIR=/app/data/manuals
       - LOGS_DIR=/app/logs
       - LOG_LEVEL=INFO

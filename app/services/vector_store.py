@@ -7,7 +7,7 @@ import uuid
 
 from app.models.schemas import DocumentChunk, ChunkMetadata
 from app.config import get_settings
-from app.services.embedding_service import EmbeddingService
+from app.services.embedding_service import get_embedding_service
 
 
 class VectorStore:
@@ -15,12 +15,21 @@ class VectorStore:
     
     def __init__(self):
         self.settings = get_settings()
-        self.client = QdrantClient(
-            host=self.settings.qdrant_host,
-            port=self.settings.qdrant_port
-        )
+
+        # Check if using Qdrant Cloud or local instance
+        if self.settings.qdrant_url:
+            self.client = QdrantClient(
+                url=self.settings.qdrant_url,
+                api_key=self.settings.qdrant_api_key
+            )
+        else:
+            self.client = QdrantClient(
+                host=self.settings.qdrant_host,
+                port=self.settings.qdrant_port
+            )
+
         self.collection_name = self.settings.qdrant_collection_name
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = get_embedding_service()
     
     def is_connected(self) -> bool:
         """Check if Qdrant is accessible."""
@@ -218,3 +227,14 @@ class VectorStore:
             )
         )
         return -1  # Qdrant doesn't return count of deleted items
+
+
+# Singleton — Qdrant client and embedding model shared across all services
+_vector_store: Optional["VectorStore"] = None
+
+
+def get_vector_store() -> "VectorStore":
+    global _vector_store
+    if _vector_store is None:
+        _vector_store = VectorStore()
+    return _vector_store

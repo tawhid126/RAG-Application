@@ -80,6 +80,8 @@ class QueryLog(BaseModel):
     timestamp: datetime
     query: str
     answer: str
+    citations: list[Citation] = []
+    response_time_ms: float = 0.0
 
 
 # Conversation memory models
@@ -152,5 +154,34 @@ class MultiSourceIngestResponse(BaseModel):
     source_type: str
     chunks_created: int
     message: str
-    citations: list[Citation]
-    response_time_ms: float
+
+
+# Agentic RAG models
+class AgentStepType(str, Enum):
+    """Types of agent reasoning steps."""
+    QUERY_ANALYSIS = "query_analysis"
+    QUERY_DECOMPOSITION = "query_decomposition"
+    RETRIEVAL = "retrieval"
+    ANSWER_GENERATION = "answer_generation"
+    SELF_REFLECTION = "self_reflection"
+    REFINEMENT = "refinement"
+
+
+class AgentStep(BaseModel):
+    """A single step in the agent's reasoning process."""
+    step_type: AgentStepType
+    title: str
+    description: str
+    data: Optional[Dict[str, Any]] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AgentQueryRequest(BaseModel):
+    """Request for an agentic RAG query."""
+    query: str = Field(..., min_length=1, max_length=2000)
+    session_id: Optional[str] = None
+    source_filters: Optional[List[str]] = Field(
+        default=None,
+        description="Optional list of brand/source names to limit search"
+    )
+    max_iterations: int = Field(default=2, ge=1, le=3)

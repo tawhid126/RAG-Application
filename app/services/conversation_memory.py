@@ -5,6 +5,7 @@ import json
 import logging
 from pathlib import Path
 import uuid
+import threading
 
 from app.models.schemas import ConversationMessage, ConversationSession
 from app.config import get_settings
@@ -14,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 class ConversationMemory:
     """Manage conversation history and context."""
-    
+
     def __init__(self):
         self.settings = get_settings()
         self.sessions: Dict[str, ConversationSession] = {}
         self.max_history = 10  # Maximum messages to keep in context
         self._cleanup_interval = timedelta(hours=24)  # Cleanup old sessions
+        self._lock = threading.Lock()
     
     def create_session(self, session_id: Optional[str] = None) -> str:
         """
@@ -33,13 +35,14 @@ class ConversationMemory:
         """
         if session_id is None:
             session_id = str(uuid.uuid4())
-        
-        self.sessions[session_id] = ConversationSession(
-            session_id=session_id,
-            created_at=datetime.utcnow(),
-            last_updated=datetime.utcnow(),
-            messages=[]
-        )
+
+        with self._lock:
+            self.sessions[session_id] = ConversationSession(
+                session_id=session_id,
+                created_at=datetime.utcnow(),
+                last_updated=datetime.utcnow(),
+                messages=[]
+            )
         
         logger.info(f"Created new conversation session: {session_id}")
         return session_id
@@ -72,26 +75,27 @@ class ConversationMemory:
             content: Message content
             metadata: Optional metadata
         """
-        if session_id not in self.sessions:
-            self.create_session(session_id)
-        
-        message = ConversationMessage(
-            role=role,
-            content=content,
-            timestamp=datetime.utcnow(),
-            metadata=metadata or {}
-        )
-        
-        self.sessions[session_id].messages.append(message)
-        self.sessions[session_id].last_updated = datetime.utcnow()
-        
-        # Keep only the last N messages to prevent memory bloat
-        if len(self.sessions[session_id].messages) > self.max_history * 2:
-            # Keep system message if exists, then last N pairs
-            messages = self.sessions[session_id].messages
-            system_messages = [m for m in messages if m.role == "system"]
-            other_messages = [m for m in messages if m.role != "system"]
-            self.sessions[session_id].messages = system_messages + other_messages[-(self.max_history * 2):]
+        with self._lock:
+            if session_id not in self.sessions:
+                self.create_session(session_id)
+
+            message = ConversationMessage(
+                role=role,
+                content=content,
+                timestamp=datetime.utcnow(),
+                metadata=metadata or {}
+            )
+
+            self.sessions[session_id].messages.append(message)
+            self.sessions[session_id].last_updated = datetime.utcnow()
+
+            # Keep only the last N messages to prevent memory bloat
+            if len(self.sessions[session_id].messages) > self.max_history * 2:
+                # Keep system message if exists, then last N pairs
+                messages = self.sessions[session_id].messages
+                system_messages = [m for m in messages if m.role == "system"]
+                other_messages = [m for m in messages if m.role != "system"]
+                self.sessions[session_id].messages = system_messages + other_messages[-(self.max_history * 2):]
     
     def get_conversation_history(
         self,
@@ -150,11 +154,12 @@ class ConversationMemory:
         Returns:
             True if session was cleared, False if not found
         """
-        if session_id in self.sessions:
-            del self.sessions[session_id]
-            logger.info(f"Cleared conversation session: {session_id}")
-            return True
-        return False
+        with self._lock:
+            if session_id in self.sessions:
+                del self.sessions[session_id]
+                logger.info(f"Cleared conversation session: {session_id}")
+                return True
+            return False
     
     def cleanup_old_sessions(self) -> int:
         """
@@ -163,14 +168,15 @@ class ConversationMemory:
         Returns:
             Number of sessions removed
         """
-        now = datetime.utcnow()
-        old_sessions = [
-            sid for sid, session in self.sessions.items()
-            if now - session.last_updated > self._cleanup_interval
-        ]
-        
-        for sid in old_sessions:
-            del self.sessions[sid]
+        with self._lock:
+            now = datetime.utcnow()
+            old_sessions = [
+                sid for sid, session in self.sessions.items()
+                if now - session.last_updated > self._cleanup_interval
+            ]
+
+            for sid in old_sessions:
+                del self.sessions[sid]
         
         if old_sessions:
             logger.info(f"Cleaned up {len(old_sessions)} old conversation sessions")
@@ -191,14 +197,22 @@ class ConversationMemory:
             return None
         
         session = self.sessions[session_id]
-        
+
+        user_msgs = 0
+        assistant_msgs = 0
+        for m in session.messages:
+            if m.role == "user":
+                user_msgs += 1
+            elif m.role == "assistant":
+                assistant_msgs += 1
+
         return {
             "session_id": session_id,
             "created_at": session.created_at.isoformat(),
             "last_updated": session.last_updated.isoformat(),
             "message_count": len(session.messages),
-            "user_messages": len([m for m in session.messages if m.role == "user"]),
-            "assistant_messages": len([m for m in session.messages if m.role == "assistant"])
+            "user_messages": user_msgs,
+            "assistant_messages": assistant_msgs,
         }
     
     def list_active_sessions(self) -> List[str]:

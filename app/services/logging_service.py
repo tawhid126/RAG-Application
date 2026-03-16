@@ -1,7 +1,7 @@
 """Logging service for query tracking."""
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 import structlog
@@ -101,8 +101,7 @@ class LoggingService:
         
         # Get log files for the date range
         for i in range(days_back):
-            date = datetime.utcnow()
-            date = date.replace(day=date.day - i)
+            date = datetime.utcnow() - timedelta(days=i)
             log_file = self.logs_dir / f"queries_{date.strftime('%Y-%m-%d')}.jsonl"
             
             if log_file.exists():

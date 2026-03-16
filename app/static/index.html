@@ -3,129 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manual Assistant</title>
+    <title>Knowledge Assistant - Agentic RAG</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1>Security Manual Assistant</h1>
-                <p class="subtitle">AI-powered assistant for Teletek & Duevi manuals</p>
+<body data-theme="light">
+    <div class="app-layout">
+        <!-- Header Bar -->
+        <header class="header-bar">
+            <div class="header-left">
+                <button id="sidebarToggle" class="icon-btn" title="Toggle Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                <h1>Knowledge Assistant</h1>
+                <span class="badge">Agentic RAG</span>
             </div>
-            <div class="header-actions">
-                <select id="brandFilter" class="brand-select">
-                    <option value="">All Brands</option>
-                    <option value="teletek">Teletek</option>
-                    <option value="duevi">Duevi</option>
-                </select>
-                <button id="settingsBtn" class="icon-btn" title="Settings">Settings</button>
+            <div class="header-right">
+                <button id="newChatBtn" class="header-btn" title="New Chat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    New Chat
+                </button>
+                <button id="themeToggle" class="icon-btn" title="Toggle Theme">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                </button>
             </div>
         </header>
 
-        <!-- Main Chat Area -->
-        <main class="chat-container">
-            <div id="chatMessages" class="chat-messages">
-                <!-- Welcome message -->
-                <div class="message assistant-message">
-                    <div class="message-content">
-                        <p>Hello! I'm your Security Manual Assistant. I can help you find information from Teletek and Duevi technical manuals.</p>
-                        <p>Ask me about:</p>
-                        <ul>
-                            <li>Installation procedures</li>
-                            <li>Wiring diagrams</li>
-                            <li>Troubleshooting steps</li>
-                            <li>Configuration settings</li>
-                            <li>Technical specifications</li>
-                        </ul>
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar">
+                <!-- Chat History -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Chat History
+                    </h3>
+                    <div id="chatHistory" class="chat-history-list">
+                        <p class="empty-state">No past conversations</p>
+                    </div>
+                </section>
+
+                <!-- Source Filters -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        Source Filters
+                    </h3>
+                    <div id="sourceFilters" class="filter-list">
+                        <p class="empty-state">No sources indexed yet</p>
+                    </div>
+                </section>
+
+                <!-- Documents -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Documents
+                    </h3>
+                    <div id="documentList" class="document-list">
+                        <p class="empty-state">Upload PDFs to get started</p>
+                    </div>
+                </section>
+
+                <!-- Upload -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload Knowledge Source
+                    </h3>
+                    <form id="uploadForm" class="sidebar-form">
+                        <input type="text" id="uploadBrand" placeholder="Source name (e.g. product-manual, hr-docs)" required>
+                        <input type="file" id="uploadFile" accept=".pdf" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Upload & Index</button>
+                    </form>
+                    <div id="uploadStatus" class="status-msg"></div>
+                </section>
+
+                <!-- Website Ingestion -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        Ingest Website
+                    </h3>
+                    <form id="websiteForm" class="sidebar-form">
+                        <textarea id="websiteUrls" rows="3" placeholder="https://example.com&#10;https://docs.example.com" required></textarea>
+                        <input type="text" id="websiteSourceName" placeholder="Source name (optional)">
+                        <button type="submit" class="btn btn-primary btn-sm">Ingest Website</button>
+                    </form>
+                    <div id="websiteStatus" class="status-msg"></div>
+                </section>
+
+                <!-- YouTube Ingestion -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-1.96C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 1.96A29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 1.96C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-1.96A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+                        Ingest YouTube
+                    </h3>
+                    <form id="youtubeForm" class="sidebar-form">
+                        <textarea id="youtubeUrls" rows="3" placeholder="https://youtube.com/watch?v=...&#10;https://youtu.be/..." required></textarea>
+                        <input type="text" id="youtubeLangs" value="en,bn" placeholder="en,bn">
+                        <button type="submit" class="btn btn-primary btn-sm">Ingest YouTube</button>
+                    </form>
+                    <div id="youtubeStatus" class="status-msg"></div>
+                </section>
+
+                <!-- System Status -->
+                <section class="sidebar-section">
+                    <h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        System Status
+                    </h3>
+                    <div id="systemStatus" class="status-indicators">
+                        <div class="status-row">
+                            <span class="status-dot loading" id="apiDot"></span>
+                            <span>API Server</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-dot loading" id="qdrantDot"></span>
+                            <span>Vector DB</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-dot loading" id="geminiDot"></span>
+                            <span>Gemini AI</span>
+                        </div>
+                    </div>
+                    <div id="statsInfo" class="stats-info"></div>
+                </section>
+            </aside>
+
+            <!-- Chat Area -->
+            <main class="chat-area">
+                <div id="chatMessages" class="chat-messages">
+                    <!-- Welcome message -->
+                    <div class="message assistant-message">
+                        <div class="message-avatar">AI</div>
+                        <div class="message-body">
+                            <div class="content-area">
+                                <p><strong>Welcome to Knowledge Assistant!</strong></p>
+                                <p>I'm an AI-powered assistant with agentic reasoning. I can:</p>
+                                <ul>
+                                    <li><strong>Route</strong> your query to the right knowledge source automatically</li>
+                                    <li><strong>Decompose</strong> complex questions into sub-queries</li>
+                                    <li><strong>Self-correct</strong> by refining searches if results aren't good enough</li>
+                                </ul>
+                                <p>Upload your PDF knowledge sources from the sidebar, then ask me anything!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
 
-        <!-- Input Area -->
-        <footer class="input-container">
-            <form id="queryForm" class="input-form">
-                <input 
-                    type="text" 
-                    id="queryInput" 
-                    placeholder="Ask a question about security systems..."
-                    autocomplete="off"
-                    required
-                >
-                <button type="submit" id="sendBtn">
-                    <span class="send-icon">Send</span>
-                </button>
-            </form>
-        </footer>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings & Admin</h2>
-                <button class="close-btn" id="closeSettings">&times;</button>
-            </div>
-            <div class="modal-body">
-                <!-- System Status -->
-                <section class="settings-section">
-                    <h3>System Status</h3>
-                    <div id="systemStatus" class="status-grid">
-                        <div class="status-item">
-                            <span class="status-label">API Status:</span>
-                            <span id="apiStatus" class="status-value loading">Checking...</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">Vector DB:</span>
-                            <span id="qdrantStatus" class="status-value loading">Checking...</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">OpenAI:</span>
-                            <span id="openaiStatus" class="status-value loading">Checking...</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Upload Manual -->
-                <section class="settings-section">
-                    <h3>Upload Manual</h3>
-                    <form id="uploadForm" class="upload-form">
-                        <select id="uploadBrand" required>
-                            <option value="">Select Brand</option>
-                            <option value="teletek">Teletek</option>
-                            <option value="duevi">Duevi</option>
-                        </select>
-                        <input type="file" id="uploadFile" accept=".pdf" required>
-                        <button type="submit" class="btn btn-primary">Upload</button>
+                <footer class="chat-input-bar">
+                    <form id="queryForm" class="input-form">
+                        <input type="text" id="queryInput" placeholder="Ask anything about your uploaded knowledge sources..." autocomplete="off" required>
+                        <button type="submit" id="sendBtn" class="send-btn" title="Send">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
                     </form>
-                    <div id="uploadStatus" class="upload-status"></div>
-                </section>
-
-                <!-- Index Manuals -->
-                <section class="settings-section">
-                    <h3>Index Manuals</h3>
-                    <p class="help-text">Process and index uploaded manuals for search.</p>
-                    <div class="button-group">
-                        <button class="btn btn-secondary" onclick="ingestBrand('teletek')">
-                            Index Teletek
-                        </button>
-                        <button class="btn btn-secondary" onclick="ingestBrand('duevi')">
-                            Index Duevi
-                        </button>
+                    <div class="input-meta">
+                        <span id="sessionInfo">New session</span>
+                        <button id="clearSession" class="meta-btn" title="Clear session">Clear</button>
                     </div>
-                    <div id="ingestStatus" class="ingest-status"></div>
-                </section>
-
-                <!-- Statistics -->
-                <section class="settings-section">
-                    <h3>Statistics</h3>
-                    <div id="statsContainer" class="stats-container">
-                        <button class="btn btn-outline" onclick="loadStats()">Load Stats</button>
-                    </div>
-                </section>
-            </div>
+                </footer>
+            </main>
         </div>
     </div>
 

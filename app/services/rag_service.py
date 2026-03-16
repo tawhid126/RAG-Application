@@ -5,7 +5,7 @@ import json
 import requests
 
 from app.config import get_settings
-from app.services.vector_store import VectorStore
+from app.services.vector_store import get_vector_store
 from app.services.conversation_memory import get_conversation_memory
 from app.models.schemas import (
     QueryResponse, Citation, 
@@ -16,28 +16,23 @@ from app.models.schemas import (
 class RAGService:
     """Retrieval-Augmented Generation service."""
     
-    SYSTEM_PROMPT = """You are a Universal Knowledge Assistant that helps users find information from various sources including PDFs, websites, YouTube videos, and databases.
+    SYSTEM_PROMPT = """You are a knowledge retrieval assistant. Answer questions based strictly on the provided source context below.
 
-Instructions:
-1. Only answer questions based on the provided context from the sources.
-2. If the context doesn't contain enough information to answer the question, say so clearly.
-3. Be precise and clear in your answers.
-4. When referencing information, mention the source it comes from.
-5. If multiple sources discuss the same topic, synthesize the information and cite all relevant sources.
-6. Keep answers focused and helpful.
+RULES:
+1. Answer using ONLY information from the context below — summarize, explain, and synthesize from it freely.
+2. Do NOT use your own training data, general knowledge, or outside information.
+3. If the context contains relevant information, use it to give a helpful answer even if it does not use the exact words of the question.
+4. Only say "I don't have enough information in the available sources to answer this question." if the context truly contains nothing related to the question.
 
 Context from sources:
-{context}
-
-Answer the user's question based ONLY on the above context. If the answer is not in the context, say "I don't have enough information in the available sources to answer this question."
-"""
+{context}"""
     
     def __init__(self):
         self.settings = get_settings()
         self.api_key = self.settings.google_api_key
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
         self.session = requests.Session()
-        self.vector_store = VectorStore()
+        self.vector_store = get_vector_store()
         self.conversation_memory = get_conversation_memory()
 
     def _normalize_model_name(self) -> str:
@@ -311,19 +306,19 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Create or get session
         if not session_id:
             session_id = self.conversation_memory.create_session()
-        elif session_id not in self.conversation_memory.list_active_sessions():
+        elif session_id not in self.conversation_memory.sessions:
             session_id = self.conversation_memory.create_session(session_id)
-        
+
         # Add user message to history
         self.conversation_memory.add_message(session_id, "user", query)
-        
+
         # Step 1: Retrieve relevant chunks
         search_results = self.vector_store.search(
             query=query,
             top_k=top_k or self.settings.top_k_results,
             brand_filter=brand_filter
         )
-        
+
         # Handle no results
         if not search_results:
             answer = "I couldn't find any relevant information in the available sources for your question."
@@ -396,9 +391,9 @@ Answer the user's question based ONLY on the above context. If the answer is not
         # Create or get session
         if not session_id:
             session_id = self.conversation_memory.create_session()
-        elif session_id not in self.conversation_memory.list_active_sessions():
+        elif session_id not in self.conversation_memory.sessions:
             session_id = self.conversation_memory.create_session(session_id)
-        
+
         # Send session ID
         yield json.dumps({
             "type": "session",

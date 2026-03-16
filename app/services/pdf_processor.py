@@ -1,4 +1,5 @@
 """PDF processing service for extracting and chunking text."""
+import re
 import fitz  # PyMuPDF
 from pathlib import Path
 from typing import Generator
@@ -23,27 +24,28 @@ class PDFProcessor:
         """
         pages = []
         doc = fitz.open(str(pdf_path))
-        
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            text = page.get_text("text")
-            
-            # Clean up the text
-            text = self._clean_text(text)
-            
-            if text.strip():  # Only include non-empty pages
-                pages.append({
-                    "page_number": page_num + 1,  # 1-indexed
-                    "text": text
-                })
-        
-        doc.close()
+
+        try:
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                text = page.get_text("text")
+
+                # Clean up the text
+                text = self._clean_text(text)
+
+                if text.strip():  # Only include non-empty pages
+                    pages.append({
+                        "page_number": page_num + 1,  # 1-indexed
+                        "text": text
+                    })
+        finally:
+            doc.close()
+
         return pages
     
     def _clean_text(self, text: str) -> str:
         """Clean and normalize extracted text."""
         # Replace multiple whitespace with single space
-        import re
         text = re.sub(r'\s+', ' ', text)
         # Remove any control characters
         text = ''.join(char for char in text if ord(char) >= 32 or char in '\n\t')
@@ -67,9 +69,8 @@ class PDFProcessor:
         """
         chunk_size = self.settings.chunk_size
         chunk_overlap = self.settings.chunk_overlap
-        
+
         # Split into sentences (rough approximation)
-        import re
         sentences = re.split(r'(?<=[.!?])\s+', text)
         
         current_chunk = []
